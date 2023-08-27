@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-const { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_INTERNAL_SERVER_ERROR } =
-  require('http2').constants;
+const { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_INTERNAL_SERVER_ERROR } = require('http2').constants;
 const cardModel = require('../models/card');
 
 const createCard = (req, res) => {
@@ -46,11 +45,9 @@ const getAllCard = (req, res) => {
     .find({})
     .populate(['owner', 'likes'])
     .then((cards) => res.send(cards))
-    .catch(() =>
-      res
-        .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Ошибка сервера' })
-    );
+    .catch(() => res
+      .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+      .send({ message: 'Ошибка сервера' }));
 };
 
 const createLikeCard = (req, res) => {
@@ -58,7 +55,7 @@ const createLikeCard = (req, res) => {
     .findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-      { new: true }
+      { new: true },
     )
     .populate(['owner', 'likes'])
     .then((card) => {
@@ -79,7 +76,7 @@ const createDislikeCard = (req, res) => {
     .findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } }, // убрать _id из массива
-      { new: true }
+      { new: true },
     )
     .populate(['owner', 'likes'])
     .then((card) => {
