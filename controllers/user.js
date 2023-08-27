@@ -13,9 +13,7 @@ const createUser = (req, res) => {
   console.log(req.body);
   return userModel
     .create({ name, about, avatar })
-    .then((r) => {
-      return res.status(HTTP_STATUS_CREATED).send({ data: r });
-    })
+    .then((r) => res.status(HTTP_STATUS_CREATED).send({ data: r }))
     .catch((e) => {
       if (e instanceof mongoose.Error.ValidationError) {
         return res
@@ -28,18 +26,12 @@ const createUser = (req, res) => {
     });
 };
 
-const getUsers = (req, res) => {
-  return userModel
-    .find({})
-    .then((r) => {
-      return res.status(HTTP_STATUS_OK).send(r);
-    })
-    .catch((e) => {
-      return res
-        .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Server Error' });
-    });
-};
+const getUsers = (req, res) => userModel
+  .find({})
+  .then((r) => res.status(HTTP_STATUS_OK).send(r))
+  .catch(() => res
+    .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+    .send({ message: 'Server Error' }));
 
 const getUserById = (req, res) => {
   const { userID } = req.params;
@@ -70,22 +62,18 @@ const updateUserById = (req, res) => {
   userModel
     .findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .then((user) => res.send({ data: user }))
-    .catch((e) =>
-      res
-        .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Server Error' })
-    );
+    .catch(() => res
+      .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+      .send({ message: 'Server Error' }));
 };
 
 const updateUserAvatarById = (req, res) => {
   userModel
     .findByIdAndUpdate(req.user._id, { avatar: req.body.avatar }, { new: true })
     .then((user) => res.send({ data: user }))
-    .catch((e) =>
-      res
-        .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Server Error' })
-    );
+    .catch(() => res
+      .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+      .send({ message: 'Server Error' }));
 };
 
 module.exports = {
