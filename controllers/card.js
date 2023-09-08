@@ -1,56 +1,54 @@
 const mongoose = require('mongoose');
-const { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_INTERNAL_SERVER_ERROR } = require('http2').constants;
+const {HTTP_STATUS_CREATED, HTTP_STATUS_OK} = require('http2').constants;
+const NotFoundError = require('../errors/NotFoundError');
+const BadRequestError = require('../errors/BadRequestError');
+const ForbiddenError = require('../errors/ForbiddenError');
 const cardModel = require('../models/card');
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
   cardModel
     .create({ name, link, owner: req.user._id })
     .then((card) => {
-      res.status(201).send(card);
+      res.status(HTTP_STATUS_CREATED).send(card);
     })
-    .catch((e) => {
-      if (e instanceof mongoose.Error.ValidationError) {
-        return res
-          .status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Invalid Data' });
+    .catch((error) => {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return next(new BadRequestError(error.message));
       }
-      return res
-        .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Server Error' });
+      return next(error);
     });
 };
 
-const deleteCard = (req, res) => {
+const deleteCard = (req, res, next) => {
   cardModel
-    .findByIdAndRemove(req.params.cardId)
-    .then(() => {
-      res.send({ message: 'Card remove' });
+    .findById(req.params.cardId)
+    .then((card) => {
+      if (!card.owner.equals(req.user._id)) { throw new ForbiddenError('Invalid user'); }
+      cardModel.deleteOne(card).orFail().then(() => {
+        res.status(HTTP_STATUS_OK).send({ message: 'Card remove' });
+      });
     })
-    .catch((e) => {
-      if (e.name === 'CastError') {
-        res
-          .status(HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Invalid Request' });
-      } else {
-        res
-          .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'Server Error' });
+    .catch((error) => {
+      if (error instanceof mongoose.Error.DocumentNotFoundError) {
+        return next(new NotFoundError('Card not found'));
       }
+      if (error instanceof mongoose.Error.CastError) {
+        return next(new BadRequestError('Invalid card ID'));
+      }
+      return next(error);
     });
 };
 
-const getAllCard = (req, res) => {
+const getAllCard = (req, res, next) => {
   cardModel
     .find({})
     .populate(['owner', 'likes'])
     .then((cards) => res.send(cards))
-    .catch(() => res
-      .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-      .send({ message: 'Ошибка сервера' }));
+    .catch(next);
 };
 
-const createLikeCard = (req, res) => {
+const createLikeCard = (req, res, next) => {
   cardModel
     .findByIdAndUpdate(
       req.params.cardId,
@@ -61,17 +59,14 @@ const createLikeCard = (req, res) => {
     .then((card) => {
       res.send(card);
     })
-    .catch((e) => {
-      if (e.name === 'CastError') {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Invalid ID' });
-      } else {
-        res
-          .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'Server Error' });
+    .catch((error) => {
+      if (error instanceof mongoose.Error.DocumentNotFoundError) {
+        return next(new NotFoundError('Карточка не найдена'));
       }
+      return next(error);
     });
 };
-const createDislikeCard = (req, res) => {
+const createDislikeCard = (req, res, next) => {
   cardModel
     .findByIdAndUpdate(
       req.params.cardId,
@@ -82,14 +77,11 @@ const createDislikeCard = (req, res) => {
     .then((card) => {
       res.send(card);
     })
-    .catch((e) => {
-      if (e.name === 'CastError') {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Invalid ID' });
-      } else {
-        res
-          .status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'Server Error' });
+    .catch((error) => {
+      if (error instanceof mongoose.Error.DocumentNotFoundError) {
+        return next(new NotFoundError('Карточка не найдена'));
       }
+      return next(error);
     });
 };
 
