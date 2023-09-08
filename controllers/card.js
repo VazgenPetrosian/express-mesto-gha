@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const {HTTP_STATUS_CREATED, HTTP_STATUS_OK} = require('http2').constants;
+const { HTTP_STATUS_CREATED, HTTP_STATUS_OK } = require('http2').constants;
 const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
 const ForbiddenError = require('../errors/ForbiddenError');
