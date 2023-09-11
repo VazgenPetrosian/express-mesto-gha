@@ -22,13 +22,13 @@ const createCard = (req, res, next) => {
 
 const deleteCard = (req, res, next) => {
   cardModel
-    .findById(req.params.cardId)
+    .findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card.owner.equals(req.user._id)) { throw new ForbiddenError('Invalid user'); }
-      cardModel.deleteOne(card).orFail().then(() => {
-        res.status(HTTP_STATUS_OK).send({ message: 'Card remove' });
-      });
+      // cardModel.deleteOne(card).orFail().then(() => {
+      res.status(HTTP_STATUS_OK).send({ message: 'Card remove' });
     })
+    // })
     .catch((error) => {
       if (error instanceof mongoose.Error.DocumentNotFoundError) {
         return next(new NotFoundError('Card not found'));
